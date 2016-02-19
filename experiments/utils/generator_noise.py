@@ -10,21 +10,6 @@ import copy
 import sys
 from ast import literal_eval
 
-
-def read_graph_file(filepath):
-    G = nx.DiGraph()
-    with open(filepath,'r') as fd:
-        for line in fd.readlines():
-            if line[0] == '#':
-                break
-            line = line.strip()
-            items = line.split('\t')
-            G.add_edge(int(items[0]), int(items[1]))
-    G = nx.Graph(G)
-    G.remove_edges_from(G.selfloop_edges())
-    return G
-
-
 def generate_SI(G, infP = 0.3, N = 100,  seeds_num = 3):
     Gcc = sorted(nx.connected_component_subgraphs(G.to_undirected()), key = len, reverse=True)
     G = nx.Graph()
@@ -432,96 +417,6 @@ def get_noisy_TS_empty_reports(type='PL', n = 100, inf_fraction = 0.5, seeds_num
     #f.close()
     return TS, G, infection_order, infection_track, seeds, nodes
 
-def get_noisy_TS_equiprob_shift(type='PL', n = 100, inf_fraction = 0.5, seeds_num = 2, noise = 2, reportP = 0.5, dt_sec = 10):
-    reported_moments = {}
-
-    G = generate_graph(type = type, n = n)
-
-    #print 'generated graph:', G.number_of_nodes(), G.number_of_edges()
-
-    infection_order, infection_track, seeds, nodes = generate_SI(G, infP = 0.1, N = n*inf_fraction, seeds_num = seeds_num)
-    st = datetime(2000, 01, 01, 00, 00, 00)
-    i = 0
-    TS = []
-    noisy_idx = np.random.choice(range(G.number_of_edges()), size = noise)
-    edges = G.edges()
-    noisy_interactions = [edges[e] for e in noisy_idx]
-    for e in noisy_interactions:
-        t = st + timedelta(seconds = i)
-        TS.append([t, e[0], e[1], 0, 0, 0, 0, 0, 0])
-
-        i += 1
-    infected = set()
-    for interaction in infection_order:
-        reported1, external1 = 0, 0
-        reported2, external2 = 0, 0
-        n1Inf, n2Inf = 1, 1
-        t = st + timedelta(seconds = i)
-        e = interaction
-        if e[0] in seeds:
-            #reported1 = 1
-            external1 = 1
-
-        if e[0] not in infected:
-            infected.add(e[0])
-            if np.random.rand() <= rep_prob:
-                shift = np.random.randint(0, dt_sec)
-                shifted_t = min(t + timedelta(seconds = shift), max_t)
-                TS.append([shifted_t, e[0], e[0], 1, 1, 1, 1, external1, external1])
-
-        if e[1] not in infected:
-            infected.add(e[1])
-            if np.random.rand() <= rep_prob:
-                shift = np.random.randint(0, dt_sec)
-                shifted_t = min(t + timedelta(seconds = shift), max_t)
-                TS.append([shifted_t, e[1], e[1], 1, 1, 1, 1, external2, external2])
-
-        TS.append([t, e[0], e[1], n1Inf, n2Inf, 0, 0, external1, external2])
-        i += 1
-
-        noisy_idx = np.random.choice(range(G.number_of_edges()), size = noise)
-        noisy_interactions = [edges[e] for e in noisy_idx]
-        for e in noisy_interactions:
-            t = st + timedelta(seconds = i)
-            n1Inf = 1 if e[0] in infected else 0
-            n2Inf = 1 if e[1] in infected  else 0
-            TS.append([t, e[0], e[1], n1Inf, n2Inf, 0, 0, 0, 0])
-
-            i += 1
-
-    counter = 0
-    #print len(infected)
-
-    for k,v in stored_moments.iteritems():
-        if np.random.rand() <= reportP:
-        #if np.random.rand() <= 1.0:
-            idx = np.random.randint(0, high=len(v))
-            ##print v[idx]
-            if TS[v[idx]][1] == k:
-                TS[v[idx]][5] = 1
-            else:
-                TS[v[idx]][6] = 1
-            counter += 1
-
-    #print 'reportes:', counter
-
-    c = 0
-    for i in TS:
-        if i[5] == 1:
-            c += 1
-        if i[6] == 1:
-            c += 1
-    #print c
-    #exit()
-    name = 'generated'
-    f = open(name + '.txt', 'w')
-    for i in TS:
-        f.write(str(i[0]) + '\t' + '\t'.join(map(str, i[1:]))+'\n')
-    f.close()
-    return TS, G, infection_order, infection_track, seeds, nodes
-
-
-
 def getSubgraph(G, N = 1000):
     nodes = set()
     while len(nodes) < N:
@@ -533,23 +428,6 @@ def getSubgraph(G, N = 1000):
                 break
     return nx.subgraph(G, nodes)
     
-
-def getGraph(edgesTS):
-    dict_nodes = {}
-    c = 0
-    G = nx.DiGraph()
-    for item in edgesTS:
-        edge = item[1]
-        if edge[0] not in dict_nodes.keys():
-            dict_nodes[ edge[0]] = c
-            c += 1
-        if edge[1] not in dict_nodes.keys():
-            dict_nodes[edge[1]] = c
-            c += 1
-
-        G.add_edge(dict_nodes[edge[0]], dict_nodes[edge[1]])
-    return G
-
 
 def readRealGraph(filepath):
     edgesTS = []

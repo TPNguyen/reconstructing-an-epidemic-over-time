@@ -1,8 +1,5 @@
 from datetime import datetime, timedelta
 import networkx as nx
-import matplotlib.pyplot as plt
-import sys
-from paths import *
 from accuracy import *
 
 
@@ -228,42 +225,3 @@ def get_sinks_and_sources(TS, G = nx.Graph(), mode = 'reported'):
 
     return sources, immuned, sinks, reported, unreported, sources_TnI, sinks_TnI, unreported_TnI
 
-
-def get_best_root(SPs):
-    best_cost, best_root = np.Inf, -1
-    for r, sinks in SPs.iteritems():
-        cost = 0.0
-        for sink, info in sinks.iteritems():
-            cost += info[0]
-        if cost < best_cost:
-            best_cost, best_root = cost, r
-
-    return best_cost, best_root
-
-
-if __name__ == "__main__":
-
-    p = 0.7
-    type = 'ER'
-    M = 100
-    TS, snapshots, G = g.generateTS(n = 10,
-                                  p = 0.5,
-                                  seed = 1.0,
-                                  st = datetime(2000, 01, 01, 00, 00, 00),
-                                  m = M,
-                                  srcN = 1,
-                                  reportingP = 0.7,
-                                  infectionP = 0.9,
-                                  recoveringP = 0.1,
-                                  type = type)
-    #TS, snapshots, G,_ = g.readFile('generated.txt')
-    sources, immuned = get_sinks_and_sources(TS)
-    print sources
-    print immuned
-    #exit()
-    SP = shortestPath(TS, sources, sources, immuned)
-    best_cost, best_root = get_best_root(SP)
-    print best_cost, best_root
-    output_snapshots = get_output_snapshots([i[-1] for i in SP[best_root].values()], snapshots, immuned)
-    merged_snapshots = get_snapshots_no_recov_pred([i[-1] for i in SP[best_root].values()], snapshots, immuned)
-    print output_snapshots

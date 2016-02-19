@@ -43,69 +43,6 @@ def get_out_cost(output_paths, sources, sinks, unreported):
     return cost, interactions, causality
 
 
-def validatePaths(paths, moment_of_infection, reported_infected):
-    sorted_gt = [i[0] for i in sorted(moment_of_infection.items(), key=operator.itemgetter(1))]
-    infected_gt = set(sorted_gt)
-    res, lengths = [], []
-    infected = set()
-    for p in paths:
-        order = []
-        for step in p:
-            infected.add(step[1])
-            infected.add(step[2])
-            if not order or order[-1] != step[1]:
-                order.append(step[1])
-            if not order or order[-1] != step[2]:
-                order.append(step[2])
-        order_gt = [i for i in sorted_gt if i in order]
-        order = [i for i in order if i in order_gt]
-        tau = stats.kendalltau(order, order_gt)
-        res.append(tau[0])
-        lengths.append(len(order))
-
-    print 'GT and output infection intersection', len(infected.intersection(infected_gt))
-    print 'output as infected, but not in GT', len(infected.difference(infected_gt))
-    print 'output as infected, but not in reported', len(infected.difference(reported_infected))
-    print 'output as infected, in GT, but not in reported', len((infected.intersection(infected_gt)).difference(reported_infected))
-    print len(infected_gt.difference(infected))
-    print len(reported_infected.difference(infected)), len(infected.difference(reported_infected))
-    print len(infected), len(infected_gt), len(reported_infected)
-    return res, lengths
-
-def get_upstream(TS, sinks):
-    out = set()
-
-    from_to = defaultdict(set)
-    to_from = defaultdict(set)
-    from_to_idx = defaultdict(set)
-    to_from_idx = defaultdict(set)
-
-    for ind in xrange(len(TS)):
-        j = TS[ind]
-        t, n1, n2, inf1, inf2, rep1, rep2, ext1, ext2 = j[0], j[1], j[2], j[3], j[4], j[5], j[6], j[7], j[8]
-
-        from_to[n1].add(n2)
-        from_to_idx[(n1, n2)].add(ind)
-
-        for i in to_from[n1]:
-            from_to[i].add(n2)
-            to_from[n2].add(i)
-
-            from_to_idx[(i,n2)].add(ind)
-            to_from_idx[(n2,i)].update(to_from_idx[(n1,i)])
-
-        to_from[n2].add(n1)
-        to_from_idx[(n2, n1)].add(ind)
-
-        if n1 in sinks and sinks[n1] >= t:
-            for elem in to_from[n1]:
-                out.update(to_from_idx[(n1, elem)])
-        if n2 in sinks and sinks[n2] >= t:
-            for elem in to_from[n2]:
-                out.update(to_from_idx[(n2, elem)])
-
-    return out
-
 def get_snapshots(TS, m, num_nodes, threshold = 0.75, maxTicks = False, upstream_ind = set()):
     #coloring, local_coloring = {}, {}
     moment_of_infection = {}
