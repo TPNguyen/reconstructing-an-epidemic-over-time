@@ -112,5 +112,3 @@ def add_shortestPath1(new_TS, SP, sources, sinks, immuned, unreported, parameter
             SP[i][j] = p
     #return {i: {j: out_paths[i].get(j, (np.Inf, -1, [])) for j in sinks.keys()} for i in sources.keys()}
     return SP
-
-

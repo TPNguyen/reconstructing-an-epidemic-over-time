@@ -296,4 +296,3 @@ def snapshot_accuracy(GT_snapshots, output_snapshots, pths, immuned, sources, re
     recall_recovered = []
 
     return precision_infected, recall_infected, precision_recovered, recall_recovered, abs_values_TP, gt_values, abs_values_T, set_T, set_gt_T, MCC, F1
-

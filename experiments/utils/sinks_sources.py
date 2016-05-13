@@ -224,4 +224,3 @@ def get_sinks_and_sources(TS, G = nx.Graph(), mode = 'reported'):
     #sinks = infected
 
     return sources, immuned, sinks, reported, unreported, sources_TnI, sinks_TnI, unreported_TnI
-
